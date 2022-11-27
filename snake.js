@@ -28,23 +28,12 @@ function initializeCanvas() {
 
 initializeCanvas();
 
-// TODO: memoize
-function getSnakePositionSet(snake) {
-  let snakePositions = new Set();
-  for (let [top, left] of snake) {
-    let position = top + "_" + left;
-    snakePositions.add(position);
-  }
-  return snakePositions;
-}
-
-function drawSnake(snake) {
-  let snakePositions = getSnakePositionSet(snake);
+function drawSnake() {
   for (let i = 0; i < ROWS; i++) {
     for (let j = 0; j < COLS; j++) {
       let position = i + "_" + j;
       let pixel = pixels.get(position);
-      pixel.style.background = snakePositions.has(position)
+      pixel.style.background = currentSnakePositions.has(position)
         ? "black"
         : "white ";
     }
@@ -58,6 +47,8 @@ let currentSnake = [
   [0, 3],
   [0, 4],
 ];
+let currentSnakePositions = toPositionSet(currentSnake);
+
 let moveRight = ([t, l]) => [t, l + 1];
 let moveLeft = ([t, l]) => [t, l - 1];
 let moveUp = ([t, l]) => [t - 1, l];
@@ -105,12 +96,13 @@ function step() {
   }
   currentDirection = nextDirection;
   let nextHead = currentDirection(head);
-  if (!checkValidHead(currentSnake, nextHead)) {
+  if (!checkValidHead(currentSnakePositions, nextHead)) {
     stopGame();
     return;
   }
   currentSnake.push(nextHead);
-  drawSnake(currentSnake);
+  currentSnakePositions = toPositionSet(currentSnake);
+  drawSnake();
   // dump(directionQueue);
 }
 
@@ -130,17 +122,15 @@ function areOpposite(dir1, dir2) {
   return false;
 }
 
-function checkValidHead(snake, [top, left]) {
+function checkValidHead(positions, [top, left]) {
   if (top < 0 || left < 0) {
     return false;
   }
   if (top >= ROWS || left >= COLS) {
     return false;
   }
-
-  let snakePositions = getSnakePositionSet(snake);
   let position = top + "_" + left;
-  if (snakePositions.has(position)) {
+  if (positions.has(position)) {
     return false;
   }
   return true;
@@ -151,10 +141,19 @@ function stopGame() {
   clearInterval(gameInterval);
 }
 
-drawSnake(currentSnake);
+drawSnake();
 let gameInterval = setInterval(() => {
   step();
 }, 100);
+
+function toPositionSet(snake) {
+  let set = new Set();
+  for (let [top, left] of snake) {
+    let position = top + "_" + left;
+    set.add(position);
+  }
+  return set;
+}
 
 // function dump(queue) {
 //   document.getElementById("debug").innerText = queue
