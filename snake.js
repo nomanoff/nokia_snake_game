@@ -17,11 +17,11 @@ function initializeCanvas() {
       pixel.style.height = PIXEL + "px";
       pixel.style.width = PIXEL + "px";
 
-      let position = i + "_" + j;
+      let key = toKey([i, j]);
 
       canvas.appendChild(pixel);
 
-      pixels.set(position, pixel);
+      pixels.set(key, pixel);
     }
   }
 }
@@ -29,13 +29,20 @@ function initializeCanvas() {
 initializeCanvas();
 
 function drawSnake() {
+  let foodKey = toKey(currentFood);
+
   for (let i = 0; i < ROWS; i++) {
     for (let j = 0; j < COLS; j++) {
-      let position = i + "_" + j;
-      let pixel = pixels.get(position);
-      pixel.style.background = currentSnakePositions.has(position)
-        ? "black"
-        : "white ";
+      let key = toKey([i, j]);
+      let pixel = pixels.get(key);
+
+      let background = "white";
+      if (key === foodKey) {
+        background = "purple";
+      } else if (currentSnakeKeys.has(key)) {
+        background = "black";
+      }
+      pixel.style.background = background;
     }
   }
 }
@@ -47,7 +54,8 @@ let currentSnake = [
   [0, 3],
   [0, 4],
 ];
-let currentSnakePositions = toPositionSet(currentSnake);
+let currentSnakeKeys = toPosSet(currentSnake);
+let currentFood = [15, 10];
 
 let moveRight = ([t, l]) => [t, l + 1];
 let moveLeft = ([t, l]) => [t, l - 1];
@@ -96,12 +104,12 @@ function step() {
   }
   currentDirection = nextDirection;
   let nextHead = currentDirection(head);
-  if (!checkValidHead(currentSnakePositions, nextHead)) {
+  if (!checkValidHead(currentSnakeKeys, nextHead)) {
     stopGame();
     return;
   }
   currentSnake.push(nextHead);
-  currentSnakePositions = toPositionSet(currentSnake);
+  currentSnakeKeys = toPosSet(currentSnake);
   drawSnake();
   // dump(directionQueue);
 }
@@ -122,15 +130,16 @@ function areOpposite(dir1, dir2) {
   return false;
 }
 
-function checkValidHead(positions, [top, left]) {
+function checkValidHead(keys, cell) {
+  let [top, left] = cell;
   if (top < 0 || left < 0) {
     return false;
   }
   if (top >= ROWS || left >= COLS) {
     return false;
   }
-  let position = top + "_" + left;
-  if (positions.has(position)) {
+
+  if (keys.has(toKey(cell))) {
     return false;
   }
   return true;
@@ -146,10 +155,14 @@ let gameInterval = setInterval(() => {
   step();
 }, 100);
 
-function toPositionSet(snake) {
+function toKey([left, top]) {
+  return top + "_" + left;
+}
+
+function toPosSet(snake) {
   let set = new Set();
-  for (let [top, left] of snake) {
-    let position = top + "_" + left;
+  for (let cell of snake) {
+    let position = toKey(cell);
     set.add(position);
   }
   return set;
