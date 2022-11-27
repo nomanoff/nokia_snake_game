@@ -93,11 +93,10 @@ function step() {
   let nextDirection = currentDirection;
   while (directionQueue.length > 0) {
     let candidateDirection = directionQueue.shift();
-    if (areOpposite(candidateDirection, currentDirection)) {
-      continue;
+    if (!areOpposite(candidateDirection, currentDirection)) {
+      nextDirection = candidateDirection;
+      break;
     }
-    nextDirection = candidateDirection;
-    break;
   }
   currentDirection = nextDirection;
   let nextHead = currentDirection(head);
@@ -132,3 +131,6 @@ setInterval(() => {
 //     .map((fn) => fn.name)
 //     .join(", ");
 // }
+function dump2(obj) {
+  document.getElementById("debug").innerText = JSON.stringify(obj);
+}
